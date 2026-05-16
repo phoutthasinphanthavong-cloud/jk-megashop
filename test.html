@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JK-MegaShop v3.5 | ລະບົບຫຼັງບ້ານແບບບໍລິຫານເຕັມຮູບແບບ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ff4757;
+            --primary-dark: #e84118;
+            --secondary: #2f3542;
+            --bg-light: #f1f2f6;
+            --text-main: #57606f;
+            --card-bg: #ffffff;
+            --border-color: #ced6e0;
+            --badge-bg: #ffa502;
+            --admin-color: #1e90ff;
+            --success-color: #2ed573;
+        }
+
+        [data-theme="dark"] {
+            --bg-light: #1e2124;
+            --text-main: #f5f6fa;
+            --card-bg: #2f3136;
+            --secondary: #ffffff;
+            --border-color: #42464d;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+        body { font-family: 'Poppins', 'Noto Sans Lao', sans-serif; background-color: var(--bg-light); color: var(--text-main); }
+
+        header { background-color: var(--card-bg); box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border-color); }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; max-width: 1200px; margin: 0 auto; }
+        .logo { font-size: 24px; font-weight: 700; color: var(--secondary); text-decoration: none; }
+        .logo span { color: var(--primary); }
+        .nav-controls { display: flex; align-items: center; gap: 12px; }
+
+        .btn-control { background: none; border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 20px; cursor: pointer; color: var(--text-main); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        .btn-control:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-admin-toggle { border-color: var(--admin-color); color: var(--admin-color); }
+        .btn-admin-toggle:hover { background-color: var(--admin-color); color: white; }
+
+        .cart-icon-btn { position: relative; font-size: 22px; background: none; border: none; color: var(--text-main); cursor: pointer; padding: 5px; }
+        .cart-badge { position: absolute; top: -5px; right: -8px; background-color: var(--primary); color: white; font-size: 11px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        .hero-banner { max-width: 1200px; margin: 20px auto; padding: 0 5%; }
+        .banner-content { background: linear-gradient(135deg, #1e90ff 0%, #ff4757 100%); color: white; border-radius: 16px; padding: 35px; text-align: center; }
+
+        .section-title { margin: 35px 0 20px 0; font-size: 22px; color: var(--secondary); border-left: 5px solid var(--primary); padding-left: 10px; }
+        .category-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; margin-bottom: 25px; }
+        .cat-tab { background-color: var(--card-bg); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 30px; cursor: pointer; font-weight: 600; color: var(--text-main); white-space: nowrap; }
+        .cat-tab.active, .cat-tab:hover { background-color: var(--primary); color: white; border-color: var(--primary); }
+
+        /* PRODUCT GRID */
+        .main-container { max-width: 1200px; margin: 0 auto; padding: 0 5% 40px 5%; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; }
+        .product-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+        .product-img { width: 100%; height: 200px; object-fit: cover; background-color: #f1f5f9; }
+        .product-info { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
+        .product-title { font-size: 15px; font-weight: 600; color: var(--secondary); margin-bottom: 8px; height: 44px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .product-price { font-size: 17px; font-weight: 700; color: var(--primary); margin-bottom: 12px; }
+        .btn-add-cart { background-color: var(--primary); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+
+        /* 💻 ADMIN DASHBOARD PANEL */
+        .admin-panel { background-color: var(--card-bg); border: 2px solid var(--admin-color); border-radius: 16px; padding: 25px; margin-bottom: 40px; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .admin-panel.show { display: block; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid var(--bg-light); padding-bottom: 15px; }
+        
+        /* Admin Navigation Tabs */
+        .admin-nav { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .admin-nav-btn { background: none; border: none; font-size: 16px; font-weight: 600; color: var(--text-main); cursor: pointer; padding: 5px 15px; position: relative; }
+        .admin-nav-btn.active { color: var(--admin-color); }
+        .admin-nav-btn.active::after { content: ''; position: absolute; bottom: -12px; left: 0; width: 100%; height: 3px; background-color: var(--admin-color); }
+        
+        .admin-sub-section { display: none; }
+        .admin-sub-section.active { display: block; }
+
+        /* Sales Dashboard Cards */
+        .dashboard-widgets { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .widget-card { background-color: var(--bg-light); padding: 20px; border-radius: 12px; border-left: 5px solid var(--admin-color); }
+        .widget-card.success { border-left-color: var(--success-color); }
+        .widget-title { font-size: 14px; text-transform: uppercase; margin-bottom: 5px; font-weight: 600; }
+        .widget-value { font-size: 24px; font-weight: 700; color: var(--secondary); }
+
+        .filter-group { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+        .select-filter { padding: 8px 15px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--card-bg); color: var(--secondary); font-weight: 600; }
+
+        .admin-table-wrapper { overflow-x: auto; }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .admin-table th, .admin-table td { border: 1px solid var(--border-color); padding: 12px; text-align: left; vertical-align: middle; }
+        .admin-table th { background-color: var(--bg-light); color: var(--secondary); }
+        
+        .input-edit { width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--bg-light); color: var(--secondary); }
+        
+        .action-flex { display: flex; gap: 5px; }
+        .btn-action { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; color: white; display: inline-flex; align-items: center; gap: 4px; }
+        .btn-save { background-color: var(--success-color); }
+        .btn-save:hover { background-color: #26af5f; }
+        .btn-danger { background-color: var(--primary); }
+        .btn-danger:hover { background-color: var(--primary-dark); }
+        .btn-add-prod { background-color: #a55eea; color: white; margin-bottom: 15px; }
+        .btn-add-prod:hover { background-color: #8854d0; }
+
+        /* CART PANEL */
+        .cart-panel { position: fixed; top: 0; right: -400px; width: 100%; max-width: 400px; height: 100%; background-color: var(--card-bg); box-shadow: -5px 0 15px rgba(0,0,0,0.1); z-index: 2000; transition: right 0.3s ease; display: flex; flex-direction: column; }
+        .cart-panel.open { right: 0; }
+        .cart-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .close-cart { background: none; border: none; font-size: 24px; color: var(--text-main); cursor: pointer; }
+        .cart-items-list { padding: 20px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 15px; }
+        .cart-item { display: flex; gap: 15px; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .cart-item-img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; }
+        .cart-item-qty { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
+        .qty-btn { background-color: var(--bg-light); border: 1px solid var(--border-color); width: 24px; height: 24px; border-radius: 4px; cursor: pointer; color: var(--text-main); }
+        .btn-remove { background: none; border: none; color: #ef4444; cursor: pointer; }
+        .cart-footer { padding: 20px; border-top: 1px solid var(--border-color); background-color: var(--bg-light); }
+        .cart-total-box { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: var(--secondary); margin-bottom: 15px; }
+        .btn-checkout { background-color: #25d366; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .cart-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); z-index: 1500; display: none; }
+        .cart-overlay.show { display: block; }
+
+        footer { background-color: #1e2124; color: #94a3b8; text-align: center; padding: 20px; font-size: 14px; margin-top: 50px; }
+        [data-lang="en"] .lang-lo { display: none !important; }
+        [data-lang="lo"] .lang-en { display: none !important; }
+    </style>
+</head>
+<body data-theme="light" data-lang="lo">
+
+    <header>
+        <div class="navbar">
+            <a href="#" class="logo">JK<span>.MegaShop</span></a>
+            <div class="nav-controls">
+                <button class="btn-control btn-admin-toggle" id="admin-mode-btn">
+                    <i class="fa-solid fa-gauge"></i> <span class="lang-lo">ລະບົບຫຼັງບ້ານ</span><span class="lang-en">Dashboard</span>
+                </button>
+                <button class="btn-control" id="theme-btn"><i class="fa-solid fa-moon"></i></button>
+                <button class="btn-control" id="lang-btn"><i class="fa-solid fa-globe"></i> <span>EN/LO</span></button>
+                <button class="cart-icon-btn" id="open-cart-btn">
+                    <i class="fa-solid fa-basket-shopping"></i>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="hero-banner">
+        <div class="banner-content">
+            <h1 class="lang-lo">📈 ລະບົບບໍລິຫານຮ້ານຄ້າເວີຊັ່ນ 3.5</h1>
+            <h1 class="lang-en">📈 Full Management Dashboard v3.5</h1>
+            <p class="lang-lo">ເພີ່ມປຸ່ມລຶບສິນຄ້າ ແລະ ປຸ່ມເພີ່ມລາຍການໃໝ່ໃນຫຼັງບ້ານແບບສົມບູນແບບ!</p>
+            <p class="lang-en">Added full Delete and Add functionalities inside admin panel!</p>
+        </div>
+    </div>
+
+    <main class="main-container">
+
+        <section class="admin-panel" id="admin-panel-box">
+            <div class="admin-header">
+                <h3><i class="fa-solid fa-gears"></i> ລະບົບຫຼັງບ້ານທັງໝົດ (Control Panel)</h3>
+                <button class="btn-control" id="close-admin-btn" style="border-color:#ff4757; color:#ff4757;">ປິດຫຼັງບ້ານ</button>
+            </div>
+
+            <div class="admin-nav">
+                <button class="admin-nav-btn active" id="tab-sales-btn" onclick="switchAdminTab('sales')"><i class="fa-solid fa-chart-line"></i> ຍອດຂາຍ & ປະຫວັດອໍເດີ້</button>
+                <button class="admin-nav-btn" id="tab-products-btn" onclick="switchAdminTab('products')"><i class="fa-solid fa-boxes-stacked"></i> ແກ້ໄຂຂໍ້ມູນສິນຄ້າ</button>
+            </div>
+
+            <div class="admin-sub-section active" id="admin-sec-sales">
+                <div class="dashboard-widgets">
+                    <div class="widget-card success">
+                        <div class="widget-title">💰 ຍອດຂາຍລວມ (ໃນຊ່ວງເວລາທີ່ເລືອກ)</div>
+                        <div class="widget-value" id="dash-revenue">0 LAK</div>
+                    </div>
+                    <div class="widget-card">
+                        <div class="widget-title">📦 จຳນວນອໍເດີ້ທັງໝົດ</div>
+                        <div class="widget-value" id="dash-orders-count">0 ອໍເດີ້</div>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label style="font-weight:700; color:var(--secondary);">📅 ເລືອກຊ່ວງເວລາ:</label>
+                    <select class="select-filter" id="sales-time-filter" onchange="renderSalesDashboard()">
+                        <option value="all">ທັງໝົດ (All Histories)</option>
+                        <option value="week">ລາຍອາທິດ (7 ວັນຍ້ອນຫຼັງ)</option>
+                        <option value="month">ລາຍເດືອນ (30 ວັນຍ້ອນຫຼັງ)</option>
+                    </select>
+                    <button class="btn-action btn-danger" onclick="clearAllOrdersHistory()" style="margin-left:auto;"><i class="fa-solid fa-trash-can"></i> ລ້າງປະຫວັດອໍເດີ້ທັງໝົດ</button>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%;">ວັນທີ-ເວລາ</th>
+                                <th style="width: 10%;">Order ID</th>
+                                <th style="width: 55%;">ລາຍການສິນຄ້າທີ່ສັ່ງ</th>
+                                <th style="width: 20%;">ຍອດເງິນລວມ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-table-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="admin-sub-section" id="admin-sec-products">
+                
+                <button class="btn-action btn-add-prod" onclick="addNewProductPlaceholder()">
+                    <i class="fa-solid fa-plus"></i> ເພີ່ມສິນຄ້າໃໝ່ (Add Product)
+                </button>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;">ID</th>
+                                <th style="width: 28%;">ຊື່ສິນຄ້າ (ພາສາລາວ)</th>
+                                <th style="width: 28%;">ຊື່ສິນຄ້າ (English)</th>
+                                <th style="width: 14%;">ລາຄາ (LAK)</th>
+                                <th style="width: 12%;">ໝວດໝູ່</th>
+                                <th style="width: 13%;">ຈັດການ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-table-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        
+        <h2 class="section-title">
+            <span class="lang-lo">📂 ແຍກຕາມໝວດໝູ່</span><span class="lang-en">📂 Categories</span>
+        </h2>
+        <div class="category-tabs" id="category-wrapper"></div>
+
+        <div class="products-grid" id="products-wrapper"></div>
+    </main>
+
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-panel" id="cart-panel">
+        <div class="cart-header">
+            <h3><span class="lang-lo">ກະຕ່າສິນຄ້າ</span><span class="lang-en">Your Cart</span></h3>
+            <button class="close-cart" id="close-cart-btn">&times;</button>
+        </div>
+        <div class="cart-items-list" id="cart-items-container"></div>
+        <div class="cart-footer">
+            <div class="cart-total-box">
+                <span class="lang-lo">ລາຄາລວມ:</span><span class="lang-en">Total:</span>
+                <span id="cart-total-price">0 LAK</span>
+            </div>
+            <button class="btn-checkout" id="whatsapp-checkout-btn">
+                <i class="fa-brands fa-whatsapp"></i>
+                <span class="lang-lo">ສັ່ງຊື້ທະລຸເຂົ້າ WhatsApp</span><span class="lang-en">Order on WhatsApp</span>
+            </button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 JK MegaShop. Full Administration Enabled.</p>
+    </footer>
+
+    <script>
+        const whatsappNumber = "2076431162"; 
+        const ADMIN_PASSWORD = "1234"; 
+
+        const categories = [
+            { id: 'all', lo: 'ທັງໝົດ', en: 'All' },
+            { id: 'cloth', lo: 'ເສື້ອຜ້າ', en: 'Clothing' },
+            { id: 'tech', lo: 'ໄອທີ-ເຕັກໂນໂລຊີ', en: 'Gadgets' },
+            { id: 'shoes', lo: 'ເກີບ', en: 'Shoes' }
+        ];
+
+        // Load Products Database from LocalStorage
+        let products = JSON.parse(localStorage.getItem('jk_shop_products'));
+        if (!products) {
+            products = [];
+            const catKeys = ['cloth', 'tech', 'shoes'];
+            for (let i = 1; i <= 20; i++) {
+                products.push({
+                    id: i,
+                    category: catKeys[(i % 3)],
+                    nameLo: `ສິນຄ້າຕົວຢ່າງ ທີ ${i}`,
+                    nameEn: `Demo Product #${i}`,
+                    price: i * 20000,
+                    image: `prod${i}.jpg`
+                });
+            }
+            localStorage.setItem('jk_shop_products', JSON.stringify(products));
+        }
+
+        // Load Orders History Database
+        let ordersHistory = JSON.parse(localStorage.getItem('jk_shop_orders')) || [];
+
+        let cart = [];
+        let activeCategory = 'all';
+
+        function initApp() {
+            renderCategoryTabs();
+            renderProductGrid();
+            renderProductsAdminTable();
+            renderSalesDashboard();
+        }
+
+        // Switch Tabs inside Admin Panel
+        window.switchAdminTab = function(tabName) {
+            document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.admin-sub-section').forEach(s => s.classList.remove('active'));
+            
+            if (tabName === 'sales') {
+                document.getElementById('tab-sales-btn').classList.add('active');
+                document.getElementById('admin-sec-sales').classList.add('active');
+                renderSalesDashboard();
+            } else {
+                document.getElementById('tab-products-btn').classList.add('active');
+                document.getElementById('admin-sec-products').classList.add('active');
+                renderProductsAdminTable();
+            }
+        }
+
+        // Render Category Tabs
+        function renderCategoryTabs() {
+            const wrapper = document.getElementById('category-wrapper');
+            wrapper.innerHTML = '';
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = `cat-tab ${activeCategory === cat.id ? 'active' : ''}`;
+                btn.innerHTML = `<span class="lang-lo">${cat.lo}</span><span class="lang-en">${cat.en}</span>`;
+                btn.onclick = () => { activeCategory = cat.id; renderCategoryTabs(); renderProductGrid(); };
+                wrapper.appendChild(btn);
+            });
+        }
+
+        // Render Product Cards (Front-end view)
+        function renderProductGrid() {
+            const wrapper = document.getElementById('products-wrapper');
+            wrapper.innerHTML = '';
+            const filtered = activeCategory === 'all' ? products : products.filter(p => p.category === activeCategory);
+            
+            if (filtered.length === 0) {
+                wrapper.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; opacity:0.5;">🚫 ບໍ່ມີສິນຄ້າໃນໝວດໝູ່ນີ້</div>`;
+                return;
+            }
+
+            filtered.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <img src="${p.image}" class="product-img" onerror="this.src='https://placehold.co/400x400?text=No+Image'">
+                    <div class="product-info">
+                        <div class="product-title">
+                            <span class="lang-lo">${p.nameLo}</span><span class="lang-en">${p.nameEn}</span>
+                        </div>
+                        <div class="product-price">${Number(p.price).toLocaleString()} LAK</div>
+                        <button class="btn-add-cart" onclick="addToCart(${p.id})">
+                            <i class="fa-solid fa-cart-plus"></i> <span class="lang-lo">ເພີ່ມລົງກະຕ່າ</span><span class="lang-en">Add to Cart</span>
+                        </button>
+                    </div>`;
+                wrapper.appendChild(card);
+            });
+        }
+
+        // Render Tab 2: Products Editing List (Admin Panel Backend view)
+        function renderProductsAdminTable() {
+            const tbody = document.getElementById('products-table-body');
+            tbody.innerHTML = '';
+            products.forEach(p => {
+                tbody.innerHTML += `
+                    <tr id="row-prod-${p.id}">
+                        <td><strong>${p.id}</strong></td>
+                        <td><input type="text" class="input-edit" id="edit-lo-${p.id}" value="${p.nameLo}"></td>
+                        <td><input type="text" class="input-edit" id="edit-en-${p.id}" value="${p.nameEn}"></td>
+                        <td><input type="number" class="input-edit" id="edit-price-${p.id}" value="${p.price}"></td>
+                        <td>
+                            <select class="input-edit" id="edit-cat-${p.id}">
+                                <option value="cloth" ${p.category === 'cloth' ? 'selected' : ''}>ເສື້ອຜ້າ</option>
+                                <option value="tech" ${p.category === 'tech' ? 'selected' : ''}>ໄອທີ-ເຕັກໂນໂລຊີ</option>
+                                <option value="shoes" ${p.category === 'shoes' ? 'selected' : ''}>ເກີບ</option>
+                            </select>
+                        </td>
+                        <td>
+                            <div class="action-flex">
+                                <button class="btn-action btn-save" onclick="saveProductFromAdmin(${p.id})" title="บันทึก"><i class="fa-solid fa-floppy-disk"></i></button>
+                                <button class="btn-action btn-danger" onclick="deleteProductFromAdmin(${p.id})" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+
+            if (products.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; opacity:0.5;">📭 ບໍ່ມີສິນຄ້າໃນຮ້ານ, ກະລຸນາກົດເພີ່ມສິນຄ້າໃໝ່</td></tr>`;
+            }
+        }
+
+        // Function 1: Save updated items
+        window.saveProductFromAdmin = function(id) {
+            const idx = products.findIndex(p => p.id === id);
+            if (idx !== -1) {
+                products[idx].nameLo = document.getElementById(`edit-lo-${id}`).value;
+                products[idx].nameEn = document.getElementById(`edit-en-${id}`).value;
+                products[idx].price = parseFloat(document.getElementById(`edit-price-${id}`).value) || 0;
+                products[idx].category = document.getElementById(`edit-cat-${id}`).value;
+                localStorage.setItem('jk_shop_products', JSON.stringify(products));
+                renderProductGrid();
+                alert(`💾 ບັນທຶກສິນຄ້າ ID: ${id} ຮຽບຮ້ອຍແລ້ວ!`);
+            }
+        };
+
+        // 🔴 Function 2: NEW! Delete selected items completely from state and browser local DB
+        window.deleteProductFromAdmin = function(id) {
+            if (confirm(`⚠️ ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບສິນຄ້າ ID: ${id} ນີ້ອອກຈາກຮ້ານ?`)) {
+                // Remove from core list array
+                products = products.filter(p => p.id !== id);
+                
+                // Save changes to LocalStorage
+                localStorage.setItem('jk_shop_products', JSON.stringify(products));
+                
+                // Refresh front-end store design + back-end control panels views
+                renderProductGrid();
+                renderProductsAdminTable();
+            }
+        };
+
+        // ➕ Function 3: NEW! Add placeholder template item automatically
+        window.addNewProductPlaceholder = function() {
+            // Find max current ID to prevent collisions
+            const maxId = products.length > 0 ? Math.max(...products.map(p => p.id)) : 0;
+            const nextId = maxId + 1;
+
+            const newItem = {
+                id: nextId,
+                category: 'cloth',
+                nameLo: `ສິນຄ້າໃໝ່ ທີ ${nextId}`,
+                nameEn: `New Product #${nextId}`,
+                price: 50000,
+                image: 'new_prod.jpg'
+            };
+
+            products.push(newItem);
+            localStorage.setItem('jk_shop_products', JSON.stringify(products));
+            
+            // Re-render and automatically scroll to the bottom row
+            renderProductGrid();
+            renderProductsAdminTable();
+            
+            setTimeout(() => {
+                const targetRow = document.getElementById(`row-prod-${nextId}`);
+                if (targetRow) targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        };
+
+        // Render Tab 1: Sales Summary Reports
+        window.renderSalesDashboard = function() {
+            const timeFilter = document.getElementById('sales-time-filter').value;
+            const tbody = document.getElementById('sales-table-body');
+            tbody.innerHTML = '';
+
+            const now = new Date();
+            let filteredOrders = [...ordersHistory];
+
+            if (timeFilter === 'week') {
+                const oneWeekAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+                filteredOrders = ordersHistory.filter(o => new Date(o.timestamp) >= oneWeekAgo);
+            } else if (timeFilter === 'month') {
+                const oneMonthAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+                filteredOrders = ordersHistory.filter(o => new Date(o.timestamp) >= oneMonthAgo);
+            }
+
+            filteredOrders.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            let totalRevenue = 0;
+            filteredOrders.forEach(o => {
+                totalRevenue += o.totalPrice;
+                const orderDate = new Date(o.timestamp).toLocaleString('lo-LA');
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${orderDate}</td>
+                        <td><code>#${o.orderId}</code></td>
+                        <td><div style="white-space: pre-line; font-size:13px;">${o.itemsSummary}</div></td>
+                        <td><strong style="color:var(--success-color)">+ ${o.totalPrice.toLocaleString()} LAK</strong></td>
+                    </tr>`;
+            });
+
+            if(filteredOrders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; opacity:0.5; padding:20px;">🚫 ບໍ່ມີປະຫວັດການສັ່ງຊື້ໃນຊ່ວງເວລານີ້</td></tr>`;
+            }
+
+            document.getElementById('dash-revenue').textContent = `${totalRevenue.toLocaleString()} LAK`;
+            document.getElementById('dash-orders-count').textContent = `${filteredOrders.length} ອໍເດີ້`;
+        }
+
+        window.clearAllOrdersHistory = function() {
+            if(confirm("⚠️ ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບປະຫວັດອໍເດີ້ ແລະ ຍອດຂາຍທັງໝົດອອກຈາກລະບົບ?")) {
+                ordersHistory = [];
+                localStorage.removeItem('jk_shop_orders');
+                renderSalesDashboard();
+            }
+        }
+
+        // Cart Controllers
+        window.addToCart = function(id) {
+            const prod = products.find(p => p.id === id);
+            if (!prod) return; // safeguard if item was deleted
+            const exist = cart.find(item => item.id === id);
+            if (exist) { exist.quantity += 1; } else { cart.push({ ...prod, quantity: 1 }); }
+            updateCartUI();
+            document.getElementById('cart-panel').classList.add('open');
+            document.getElementById('cart-overlay').classList.add('show');
+        };
+
+        window.changeQty = function(id, delta) {
+            const item = cart.find(i => i.id === id);
+            if (item) {
+                item.quantity += delta;
+                if (item.quantity <= 0) cart = cart.filter(i => i.id !== id);
+                updateCartUI();
+            }
+        };
+
+        window.removeItem = function(id) { cart = cart.filter(i => i.id !== id); updateCartUI(); };
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-items-container');
+            container.innerHTML = '';
+            let count = 0, total = 0;
+
+            if (cart.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:30px;opacity:0.5;"><span class="lang-lo">ກະຕ່າວ່າງເປົ່າ</span><span class="lang-en">Cart is empty</span></div>';
+            } else {
+                cart.forEach(item => {
+                    count += item.quantity; total += (item.price * item.quantity);
+                    container.innerHTML += `
+                        <div class="cart-item">
+                            <img src="${item.image}" class="cart-item-img" onerror="this.src='https://placehold.co/80?text=Product'">
+                            <div style="flex-grow:1;">
+                                <div style="font-size:13px; font-weight:600; color:var(--secondary);"><span class="lang-lo">${item.nameLo}</span><span class="lang-en">${item.nameEn}</span></div>
+                                <div style="color:var(--primary); font-weight:700;">${(item.price * item.quantity).toLocaleString()} LAK</div>
+                                <div class="cart-item-qty">
+                                    <button class="qty-btn" onclick="changeQty(${item.id}, -1)">-</button>
+                                    <span>${item.quantity}</span>
+                                    <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
+                                </div>
+                            </div>
+                            <button class="btn-remove" onclick="removeItem(${item.id})"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>`;
+                });
+            }
+            document.getElementById('cart-count').textContent = count;
+            document.getElementById('cart-total-price').textContent = `${total.toLocaleString()} LAK`;
+        }
+
+        // WhatsApp Sync Channel Output
+        document.getElementById('whatsapp-checkout-btn').addEventListener('click', () => {
+            if (cart.length === 0) return;
+            const isLo = document.body.getAttribute('data-lang') === 'lo';
+            
+            let txt = isLo ? `📦 *ມີລາຍການສັ່ງຊື້ໃໝ່!*\n\n` : `📦 *New Order Received!*\n\n`;
+            let itemsSummaryStr = "";
+            let totalPriceSum = 0;
+
+            cart.forEach((item, i) => {
+                const name = isLo ? item.nameLo : item.nameEn;
+                const line = `${i+1}. ${name} (${item.quantity}x) - ${(item.price * item.quantity).toLocaleString()} LAK`;
+                txt += `*${name}*\n   ${item.quantity}x | ລວມ: ${(item.price * item.quantity).toLocaleString()} LAK\n\n`;
+                itemsSummaryStr += line + "\n";
+                totalPriceSum += (item.price * item.quantity);
+            });
+            
+            txt += `💰 *ຍອດລວມທັງໝົດ:* ${totalPriceSum.toLocaleString()} LAK`;
+
+            const newOrderRecord = {
+                orderId: Math.floor(100000 + Math.random() * 900000),
+                timestamp: new Date().toISOString(),
+                itemsSummary: itemsSummaryStr,
+                totalPrice: totalPriceSum
+            };
+            ordersHistory.push(newOrderRecord);
+            localStorage.setItem('jk_shop_orders', JSON.stringify(ordersHistory));
+
+            cart = [];
+            updateCartUI();
+            document.getElementById('cart-panel').classList.remove('open');
+            document.getElementById('cart-overlay').classList.remove('show');
+            renderSalesDashboard();
+
+            window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(txt)}`, '_blank');
+        });
+
+        // Toggle Admin Panel Display
+        const adminPanelBox = document.getElementById('admin-panel-box');
+        document.getElementById('admin-mode-btn').addEventListener('click', () => {
+            if (adminPanelBox.style.display === 'block') {
+                adminPanelBox.style.display = 'none';
+            } else {
+                const pwd = prompt("กรุณาใส่รหัสผ่านแอดมิน (Admin Password):");
+                if (pwd === ADMIN_PASSWORD) {
+                    adminPanelBox.style.display = 'block';
+                    switchAdminTab('sales');
+                    adminPanelBox.scrollIntoView({ behavior: 'smooth' });
+                } else if (pwd !== null) {
+                    alert("❌ รหัสผ่านไม่ถูกต้อง! (Wrong Password)");
+                }
+            }
+        });
+
+        document.getElementById('close-admin-btn').addEventListener('click', () => { adminPanelBox.style.display = 'none'; });
+
+        // Basic Global Event Listeners UI 
+        document.getElementById('open-cart-btn').addEventListener('click', () => { document.getElementById('cart-panel').classList.add('open'); document.getElementById('cart-overlay').classList.add('show'); });
+        document.getElementById('close-cart-btn').addEventListener('click', () => { document.getElementById('cart-panel').classList.remove('open'); document.getElementById('cart-overlay').classList.remove('show'); });
+        document.getElementById('cart-overlay').addEventListener('click', () => { document.getElementById('cart-panel').classList.remove('open'); document.getElementById('cart-overlay').classList.remove('show'); });
+        document.getElementById('theme-btn').addEventListener('click', () => {
+            const t = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', t);
+            document.getElementById('theme-btn').innerHTML = t === 'dark' ? '<i class="fa-solid fa-sun" style="color:#ffa502"></i>' : '<i class="fa-solid fa-moon"></i>';
+        });
+        document.getElementById('lang-btn').addEventListener('click', () => {
+            const l = document.body.getAttribute('data-lang') === 'lo' ? 'en' : 'lo';
+            document.body.setAttribute('data-lang', l);
+            updateCartUI();
+        });
+
+        initApp();
+    </script>
+</body>
+</html>
