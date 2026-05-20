@@ -262,7 +262,30 @@
         <p>&copy; 2026 JK MegaShop. Full Administration Enabled.</p>
     </footer>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+
+        // ຄ່າ Config ແທ້ຈາກ Firebase Console ຂອງທ່ານ
+        const firebaseConfig = {
+            apiKey: "AIzaSyAAk0lquka_9LB7w2ZKnhm397R7ckQM28U",
+            authDomain: "jk-megashop.firebaseapp.com",
+            databaseURL: "https://jk-megashop-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "jk-megashop",
+            storageBucket: "jk-megashop.firebasestorage.app",
+            messagingSenderId: "126318982334",
+            appId: "1:126318982334:web:fcc6b83e3e93c41c2c5aef",
+            measurementId: "G-4GC8BS3G47"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // References Cloud Nodes
+        const productsRef = ref(database, 'products');
+        const ordersRef = ref(database, 'orders');
+
         const whatsappNumber = "2076431162"; 
         const ADMIN_PASSWORD = "1234"; 
 
@@ -273,35 +296,59 @@
             { id: 'shoes', lo: 'ເກີບ', en: 'Shoes' }
         ];
 
-        // Load Products Database from LocalStorage
-        let products = JSON.parse(localStorage.getItem('jk_shop_products'));
-        if (!products) {
-            products = [];
-            const catKeys = ['cloth', 'tech', 'shoes'];
-            for (let i = 1; i <= 20; i++) {
-                products.push({
-                    id: i,
-                    category: catKeys[(i % 3)],
-                    nameLo: `ສິນຄ້າຕົວຢ່າງ ທີ ${i}`,
-                    nameEn: `Demo Product #${i}`,
-                    price: i * 20000,
-                    image: `prod${i}.jpg`
-                });
-            }
-            localStorage.setItem('jk_shop_products', JSON.stringify(products));
-        }
-
-        // Load Orders History Database
-        let ordersHistory = JSON.parse(localStorage.getItem('jk_shop_orders')) || [];
-
+        let products = [];
+        let ordersHistory = [];
         let cart = [];
         let activeCategory = 'all';
 
+        // ຂໍ້ມູນ Backup ຫາກຖານຂໍ້ມູນ Cloud ເລີ່ມຕົ້ນຫວ່າງເປົ່າ
+        const backupProducts = [];
+        const catKeys = ['cloth', 'tech', 'shoes'];
+        for (let i = 1; i <= 20; i++) {
+            backupProducts.push({
+                id: i,
+                category: catKeys[(i % 3)],
+                nameLo: `ສິນຄ້າຕົວຢ່າງ ທີ ${i}`,
+                nameEn: `Demo Product #${i}`,
+                price: i * 20000,
+                image: `prod${i}.jpg`
+            });
+        }
+
         function initApp() {
             renderCategoryTabs();
-            renderProductGrid();
-            renderProductsAdminTable();
-            renderSalesDashboard();
+            
+            // 1. ດຶງຂໍ້ມູນສິນຄ້າຈາກ Firebase (Realtime)
+            onValue(productsRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    products = [];
+                    Object.keys(data).forEach(key => {
+                        products.push({ firebaseKey: key, ...data[key] });
+                    });
+                } else {
+                    // ຖ້າ Cloud ຫວ່າງເປົ່າ ໃຫ້ເອົາ Backup ຂຶ້ນ Cloud ເປັນຄັ້ງທຳອິດ
+                    products = backupProducts;
+                    backupProducts.forEach(p => {
+                        const newRef = push(productsRef);
+                        set(newRef, p);
+                    });
+                }
+                renderProductGrid();
+                renderProductsAdminTable();
+            });
+
+            // 2. ດຶງຂໍ້ມູນປະຫວັດອໍເດີ້ຈາກ Firebase (Realtime)
+            onValue(ordersRef, (snapshot) => {
+                const data = snapshot.val();
+                ordersHistory = [];
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        ordersHistory.push({ firebaseKey: key, ...data[key] });
+                    });
+                }
+                renderSalesDashboard();
+            });
         }
 
         // Switch Tabs inside Admin Panel
@@ -382,8 +429,8 @@
                         </td>
                         <td>
                             <div class="action-flex">
-                                <button class="btn-action btn-save" onclick="saveProductFromAdmin(${p.id})" title="บันทึก"><i class="fa-solid fa-floppy-disk"></i></button>
-                                <button class="btn-action btn-danger" onclick="deleteProductFromAdmin(${p.id})" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                                <button class="btn-action btn-save" onclick="saveProductFromAdmin('${p.firebaseKey}', ${p.id})" title="บันทึก"><i class="fa-solid fa-floppy-disk"></i></button>
+                                <button class="btn-action btn-danger" onclick="deleteProductFromAdmin('${p.firebaseKey}', ${p.id})" title="ลบ"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </td>
                     </tr>`;
@@ -394,38 +441,41 @@
             }
         }
 
-        // Function 1: Save updated items
-        window.saveProductFromAdmin = function(id) {
-            const idx = products.findIndex(p => p.id === id);
-            if (idx !== -1) {
-                products[idx].nameLo = document.getElementById(`edit-lo-${id}`).value;
-                products[idx].nameEn = document.getElementById(`edit-en-${id}`).value;
-                products[idx].price = parseFloat(document.getElementById(`edit-price-${id}`).value) || 0;
-                products[idx].category = document.getElementById(`edit-cat-${id}`).value;
-                localStorage.setItem('jk_shop_products', JSON.stringify(products));
-                renderProductGrid();
-                alert(`💾 ບັນທຶກສິນຄ້າ ID: ${id} ຮຽບຮ້ອຍແລ້ວ!`);
-            }
+        // Save updated items to Firebase Cloud
+        window.saveProductFromAdmin = function(firebaseKey, id) {
+            const nameLo = document.getElementById(`edit-lo-${id}`).value;
+            const nameEn = document.getElementById(`edit-en-${id}`).value;
+            const price = parseFloat(document.getElementById(`edit-price-${id}`).value) || 0;
+            const category = document.getElementById(`edit-cat-${id}`).value;
+            
+            // ຄົ້ນຫາຂໍ້ມູນຮູບພາບເດີມ
+            const originalProd = products.find(p => p.id === id);
+            const image = originalProd ? originalProd.image : 'new_prod.jpg';
+
+            set(ref(database, 'products/' + firebaseKey), {
+                id: id,
+                nameLo: nameLo,
+                nameEn: nameEn,
+                price: price,
+                category: category,
+                image: image
+            }).then(() => {
+                alert(`💾 ບັນທຶກສິນຄ້າ ID: ${id} ລົງ Firebase ຮຽບຮ້ອຍແລ້ວ!`);
+            });
         };
 
-        // 🔴 Function 2: NEW! Delete selected items completely from state and browser local DB
-        window.deleteProductFromAdmin = function(id) {
+        // Delete selected items completely from Firebase Cloud
+        window.deleteProductFromAdmin = function(firebaseKey, id) {
             if (confirm(`⚠️ ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບສິນຄ້າ ID: ${id} ນີ້ອອກຈາກຮ້ານ?`)) {
-                // Remove from core list array
-                products = products.filter(p => p.id !== id);
-                
-                // Save changes to LocalStorage
-                localStorage.setItem('jk_shop_products', JSON.stringify(products));
-                
-                // Refresh front-end store design + back-end control panels views
-                renderProductGrid();
-                renderProductsAdminTable();
+                remove(ref(database, 'products/' + firebaseKey)).then(() => {
+                    cart = cart.filter(i => i.id !== id);
+                    updateCartUI();
+                });
             }
         };
 
-        // ➕ Function 3: NEW! Add placeholder template item automatically
+        // Add new product placeholder to Firebase Cloud
         window.addNewProductPlaceholder = function() {
-            // Find max current ID to prevent collisions
             const maxId = products.length > 0 ? Math.max(...products.map(p => p.id)) : 0;
             const nextId = maxId + 1;
 
@@ -438,17 +488,13 @@
                 image: 'new_prod.jpg'
             };
 
-            products.push(newItem);
-            localStorage.setItem('jk_shop_products', JSON.stringify(products));
-            
-            // Re-render and automatically scroll to the bottom row
-            renderProductGrid();
-            renderProductsAdminTable();
-            
-            setTimeout(() => {
-                const targetRow = document.getElementById(`row-prod-${nextId}`);
-                if (targetRow) targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
+            const newRef = push(productsRef);
+            set(newRef, newItem).then(() => {
+                setTimeout(() => {
+                    const targetRow = document.getElementById(`row-prod-${nextId}`);
+                    if (targetRow) targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 500);
+            });
         };
 
         // Render Tab 1: Sales Summary Reports
@@ -492,18 +538,20 @@
             document.getElementById('dash-orders-count').textContent = `${filteredOrders.length} ອໍເດີ້`;
         }
 
+        // Clear all orders from Firebase Cloud
         window.clearAllOrdersHistory = function() {
-            if(confirm("⚠️ ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບປະຫວັດອໍເດີ້ ແລະ ຍອດຂາຍທັງໝົດອອກຈາກລະບົບ?")) {
-                ordersHistory = [];
-                localStorage.removeItem('jk_shop_orders');
-                renderSalesDashboard();
+            if(confirm("⚠️ ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບປະຫວັດອໍເດີ້ ແລະ ຍອດຂາຍທັງໝົດອອກຈາກລະບົບ Cloud?")) {
+                remove(ordersRef).then(() => {
+                    ordersHistory = [];
+                    renderSalesDashboard();
+                });
             }
         }
 
         // Cart Controllers
         window.addToCart = function(id) {
             const prod = products.find(p => p.id === id);
-            if (!prod) return; // safeguard if item was deleted
+            if (!prod) return; 
             const exist = cart.find(item => item.id === id);
             if (exist) { exist.quantity += 1; } else { cart.push({ ...prod, quantity: 1 }); }
             updateCartUI();
@@ -528,7 +576,7 @@
             let count = 0, total = 0;
 
             if (cart.length === 0) {
-                container.innerHTML = '<div style="text-align:center;padding:30px;opacity:0.5;"><span class="lang-lo">ກະຕ່າວ່າງເປົ່າ</span><span class="lang-en">Cart is empty</span></div>';
+                container.innerHTML = '<div style="text-align:center;padding:30px;opacity:0.5;"><span class="lang-lo">ກະຕ່າວ່າງεປົ່າ</span><span class="lang-en">Cart is empty</span></div>';
             } else {
                 cart.forEach(item => {
                     count += item.quantity; total += (item.price * item.quantity);
@@ -552,7 +600,7 @@
             document.getElementById('cart-total-price').textContent = `${total.toLocaleString()} LAK`;
         }
 
-        // WhatsApp Sync Channel Output
+        // WhatsApp Sync Channel Output & Write to Firebase Orders
         document.getElementById('whatsapp-checkout-btn').addEventListener('click', () => {
             if (cart.length === 0) return;
             const isLo = document.body.getAttribute('data-lang') === 'lo';
@@ -577,16 +625,16 @@
                 itemsSummary: itemsSummaryStr,
                 totalPrice: totalPriceSum
             };
-            ordersHistory.push(newOrderRecord);
-            localStorage.setItem('jk_shop_orders', JSON.stringify(ordersHistory));
 
-            cart = [];
-            updateCartUI();
-            document.getElementById('cart-panel').classList.remove('open');
-            document.getElementById('cart-overlay').classList.remove('show');
-            renderSalesDashboard();
-
-            window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(txt)}`, '_blank');
+            // Push order to Firebase Cloud Instead of LocalStorage
+            const newOrderRef = push(ordersRef);
+            set(newOrderRef, newOrderRecord).then(() => {
+                cart = [];
+                updateCartUI();
+                document.getElementById('cart-panel').classList.remove('open');
+                document.getElementById('cart-overlay').classList.remove('show');
+                window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(txt)}`, '_blank');
+            });
         });
 
         // Toggle Admin Panel Display
@@ -623,6 +671,7 @@
             updateCartUI();
         });
 
+        // Run application
         initApp();
     </script>
 </body>
