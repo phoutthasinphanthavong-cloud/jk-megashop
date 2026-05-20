@@ -150,8 +150,8 @@
         <div class="banner-content">
             <h1 class="lang-lo">📈 ລະບົບບໍລິຫານຮ້ານຄ້າເວີຊັ່ນ 3.5</h1>
             <h1 class="lang-en">📈 Full Management Dashboard v3.5</h1>
-            <p class="lang-lo">ເພີ່ມປຸ່ມລຶບສິນຄ້າ ແລະ ປຸ່ມເພີ່ມລາຍການໃໝ່ໃນຫຼັງບ້ານແບບສົມບູນແບບ!</p>
-            <p class="lang-en">Added full Delete and Add functionalities inside admin panel!</p>
+            <p class="lang-lo">ເພີ່ມປຸ່ມລຶບສິນຄ້າ, ປຸ່ມເພີ່ມລາຍການໃໝ່ ແລະ ຊ່ອງແກ້ໄຂລິ້ງຮູບພາບໃນຫຼັງບ້ານແບບສົມບູນແບບ!</p>
+            <p class="lang-en">Added full Delete, Add, and Image URL editing functionalities inside admin panel!</p>
         </div>
     </div>
 
@@ -201,7 +201,7 @@
                             </tr>
                         </thead>
                         <tbody id="sales-table-body">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -217,15 +217,16 @@
                         <thead>
                             <tr>
                                 <th style="width: 5%;">ID</th>
-                                <th style="width: 28%;">ຊື່ສິນຄ້າ (ພາສາລາວ)</th>
-                                <th style="width: 28%;">ຊື່ສິນຄ້າ (English)</th>
-                                <th style="width: 14%;">ລາຄາ (LAK)</th>
+                                <th style="width: 20%;">ຊື່ສິນຄ້າ (ພາສາລາວ)</th>
+                                <th style="width: 20%;">ชື່ສິນຄ້າ (English)</th>
+                                <th style="width: 12%;">ລາຄາ (LAK)</th>
                                 <th style="width: 12%;">ໝວດໝູ່</th>
+                                <th style="width: 18%;">ລິ້ງຮູບພາບ (Image URL)</th>
                                 <th style="width: 13%;">ຈັດການ</th>
                             </tr>
                         </thead>
                         <tbody id="products-table-body">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -266,7 +267,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
-        // ຄ່າ Config ແທ້ຈາກ Firebase Console ຂອງທ່ານ
         const firebaseConfig = {
             apiKey: "AIzaSyAAk0lquka_9LB7w2ZKnhm397R7ckQM28U",
             authDomain: "jk-megashop.firebaseapp.com",
@@ -278,11 +278,9 @@
             measurementId: "G-4GC8BS3G47"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // References Cloud Nodes
         const productsRef = ref(database, 'products');
         const ordersRef = ref(database, 'orders');
 
@@ -301,7 +299,6 @@
         let cart = [];
         let activeCategory = 'all';
 
-        // ຂໍ້ມູນ Backup ຫາກຖານຂໍ້ມູນ Cloud ເລີ່ມຕົ້ນຫວ່າງເປົ່າ
         const backupProducts = [];
         const catKeys = ['cloth', 'tech', 'shoes'];
         for (let i = 1; i <= 20; i++) {
@@ -318,7 +315,6 @@
         function initApp() {
             renderCategoryTabs();
             
-            // 1. ດຶງຂໍ້ມູນສິນຄ້າຈາກ Firebase (Realtime)
             onValue(productsRef, (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
@@ -327,7 +323,6 @@
                         products.push({ firebaseKey: key, ...data[key] });
                     });
                 } else {
-                    // ຖ້າ Cloud ຫວ່າງເປົ່າ ໃຫ້ເອົາ Backup ຂຶ້ນ Cloud ເປັນຄັ້ງທຳອິດ
                     products = backupProducts;
                     backupProducts.forEach(p => {
                         const newRef = push(productsRef);
@@ -338,7 +333,6 @@
                 renderProductsAdminTable();
             });
 
-            // 2. ດຶງຂໍ້ມູນປະຫວັດອໍເດີ້ຈາກ Firebase (Realtime)
             onValue(ordersRef, (snapshot) => {
                 const data = snapshot.val();
                 ordersHistory = [];
@@ -351,7 +345,6 @@
             });
         }
 
-        // Switch Tabs inside Admin Panel
         window.switchAdminTab = function(tabName) {
             document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.admin-sub-section').forEach(s => s.classList.remove('active'));
@@ -367,7 +360,6 @@
             }
         }
 
-        // Render Category Tabs
         function renderCategoryTabs() {
             const wrapper = document.getElementById('category-wrapper');
             wrapper.innerHTML = '';
@@ -380,7 +372,6 @@
             });
         }
 
-        // Render Product Cards (Front-end view)
         function renderProductGrid() {
             const wrapper = document.getElementById('products-wrapper');
             wrapper.innerHTML = '';
@@ -409,7 +400,7 @@
             });
         }
 
-        // Render Tab 2: Products Editing List (Admin Panel Backend view)
+        // 🛠️ ເພີ່ມຊ່ອງແກ້ໄຂລິ້ງຮູບພາບ (Image URL Input) ໃນຕາຕະລາງແລ້ວເດີ້ທ່ານ
         function renderProductsAdminTable() {
             const tbody = document.getElementById('products-table-body');
             tbody.innerHTML = '';
@@ -427,6 +418,7 @@
                                 <option value="shoes" ${p.category === 'shoes' ? 'selected' : ''}>ເກີບ</option>
                             </select>
                         </td>
+                        <td><input type="text" class="input-edit" id="edit-img-${p.id}" value="${p.image || ''}" placeholder="ໃສ່ລິ້ງຮູບພາບ .jpg ຫຼື .png"></td>
                         <td>
                             <div class="action-flex">
                                 <button class="btn-action btn-save" onclick="saveProductFromAdmin('${p.firebaseKey}', ${p.id})" title="บันทึก"><i class="fa-solid fa-floppy-disk"></i></button>
@@ -437,20 +429,16 @@
             });
 
             if (products.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; opacity:0.5;">📭 ບໍ່ມີສິນຄ້າໃນຮ້ານ, ກະລຸນາກົດເພີ່ມສິນຄ້າໃໝ່</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; opacity:0.5;">📭 ບໍ່ມີສິນຄ້າໃນຮ້ານ, ກະລຸນາກົດເພີ່ມສິນຄ້າໃໝ່</td></tr>`;
             }
         }
 
-        // Save updated items to Firebase Cloud
         window.saveProductFromAdmin = function(firebaseKey, id) {
             const nameLo = document.getElementById(`edit-lo-${id}`).value;
             const nameEn = document.getElementById(`edit-en-${id}`).value;
             const price = parseFloat(document.getElementById(`edit-price-${id}`).value) || 0;
             const category = document.getElementById(`edit-cat-${id}`).value;
-            
-            // ຄົ້ນຫາຂໍ້ມູນຮູບພາບເດີມ
-            const originalProd = products.find(p => p.id === id);
-            const image = originalProd ? originalProd.image : 'new_prod.jpg';
+            const image = document.getElementById(`edit-img-${id}`).value; // ດຶງຄ່າລິ້ງຮູບໃໝ່ຈາກຊ່ອງ Input
 
             set(ref(database, 'products/' + firebaseKey), {
                 id: id,
@@ -464,7 +452,6 @@
             });
         };
 
-        // Delete selected items completely from Firebase Cloud
         window.deleteProductFromAdmin = function(firebaseKey, id) {
             if (confirm(`⚠️ ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບສິນຄ້າ ID: ${id} ນີ້ອອກຈາກຮ້ານ?`)) {
                 remove(ref(database, 'products/' + firebaseKey)).then(() => {
@@ -474,7 +461,6 @@
             }
         };
 
-        // Add new product placeholder to Firebase Cloud
         window.addNewProductPlaceholder = function() {
             const maxId = products.length > 0 ? Math.max(...products.map(p => p.id)) : 0;
             const nextId = maxId + 1;
@@ -485,7 +471,7 @@
                 nameLo: `ສິນຄ້າໃໝ່ ທີ ${nextId}`,
                 nameEn: `New Product #${nextId}`,
                 price: 50000,
-                image: 'new_prod.jpg'
+                image: 'https://placehold.co/400x400?text=New+Product' // ໃສ່ລິ້ງຮູບເລີ່ມຕົ້ນໃຫ້ເລີຍ
             };
 
             const newRef = push(productsRef);
@@ -497,7 +483,6 @@
             });
         };
 
-        // Render Tab 1: Sales Summary Reports
         window.renderSalesDashboard = function() {
             const timeFilter = document.getElementById('sales-time-filter').value;
             const tbody = document.getElementById('sales-table-body');
@@ -538,7 +523,6 @@
             document.getElementById('dash-orders-count').textContent = `${filteredOrders.length} ອໍເດີ້`;
         }
 
-        // Clear all orders from Firebase Cloud
         window.clearAllOrdersHistory = function() {
             if(confirm("⚠️ ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບປະຫວັດອໍເດີ້ ແລະ ຍອດຂາຍທັງໝົດອອກຈາກລະບົບ Cloud?")) {
                 remove(ordersRef).then(() => {
@@ -548,7 +532,6 @@
             }
         }
 
-        // Cart Controllers
         window.addToCart = function(id) {
             const prod = products.find(p => p.id === id);
             if (!prod) return; 
@@ -576,7 +559,7 @@
             let count = 0, total = 0;
 
             if (cart.length === 0) {
-                container.innerHTML = '<div style="text-align:center;padding:30px;opacity:0.5;"><span class="lang-lo">ກະຕ່າວ່າງεປົ່າ</span><span class="lang-en">Cart is empty</span></div>';
+                container.innerHTML = '<div style="text-align:center;padding:30px;opacity:0.5;"><span class="lang-lo">ກະຕ່າວ່າງເປົ່າ</span><span class="lang-en">Cart is empty</span></div>';
             } else {
                 cart.forEach(item => {
                     count += item.quantity; total += (item.price * item.quantity);
@@ -600,7 +583,6 @@
             document.getElementById('cart-total-price').textContent = `${total.toLocaleString()} LAK`;
         }
 
-        // WhatsApp Sync Channel Output & Write to Firebase Orders
         document.getElementById('whatsapp-checkout-btn').addEventListener('click', () => {
             if (cart.length === 0) return;
             const isLo = document.body.getAttribute('data-lang') === 'lo';
@@ -626,7 +608,6 @@
                 totalPrice: totalPriceSum
             };
 
-            // Push order to Firebase Cloud Instead of LocalStorage
             const newOrderRef = push(ordersRef);
             set(newOrderRef, newOrderRecord).then(() => {
                 cart = [];
@@ -637,7 +618,6 @@
             });
         });
 
-        // Toggle Admin Panel Display
         const adminPanelBox = document.getElementById('admin-panel-box');
         document.getElementById('admin-mode-btn').addEventListener('click', () => {
             if (adminPanelBox.style.display === 'block') {
@@ -656,7 +636,6 @@
 
         document.getElementById('close-admin-btn').addEventListener('click', () => { adminPanelBox.style.display = 'none'; });
 
-        // Basic Global Event Listeners UI 
         document.getElementById('open-cart-btn').addEventListener('click', () => { document.getElementById('cart-panel').classList.add('open'); document.getElementById('cart-overlay').classList.add('show'); });
         document.getElementById('close-cart-btn').addEventListener('click', () => { document.getElementById('cart-panel').classList.remove('open'); document.getElementById('cart-overlay').classList.remove('show'); });
         document.getElementById('cart-overlay').addEventListener('click', () => { document.getElementById('cart-panel').classList.remove('open'); document.getElementById('cart-overlay').classList.remove('show'); });
@@ -671,7 +650,6 @@
             updateCartUI();
         });
 
-        // Run application
         initApp();
     </script>
 </body>
